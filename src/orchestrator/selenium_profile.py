@@ -24,8 +24,8 @@ class SeleniumProfile:
             name: str,
             tab_name: str,
             options: Options,
-            path: Optional[str],
             use_cache: bool = False,
+            path: Optional[str] = None,
             explicit_wait: int = 5,
             implicit_wait: int = 10,
     ):
@@ -79,6 +79,12 @@ class SeleniumProfile:
         selected_tab = self.get_tab(name)
         if selected_tab:
             selected_tab.status = status
+
+    def is_tab_exist(self, name: str) -> bool:
+        selected_tab = self.get_tab(name)
+        if selected_tab:
+            return True
+        return False
 
     def close_driver(self):
         if not self.status == DefaultDriverStatus.CLOSED:
