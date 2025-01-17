@@ -14,11 +14,10 @@ from selenium.common.exceptions import (
     NoSuchElementException
 )
 
-from src.orchestrator.browser_factory import BrowserFactory
-from src.orchestrator.browser_config_builder import BrowserConfigBuilder
-from src.orchestrator.enums import DefaultTabStatus, DefaultDriverStatus
-from src.orchestrator.tab import Tab
-
+from ..browser.browser_factory import BrowserFactory
+from ..browser.browser_config_builder import BrowserConfigBuilder
+from ..enums import DefaultTabStatus, DefaultDriverStatus
+from .tab import Tab
 
 class SeleniumProfile:
 

@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.common.exceptions import SessionNotCreatedException
 
-from src.orchestrator.browser_config_builder import BrowserConfigBuilder
+from .browser_config_builder import BrowserConfigBuilder
 
 
 class DriverCreator:

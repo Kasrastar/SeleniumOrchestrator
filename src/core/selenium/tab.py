@@ -1,4 +1,4 @@
-from src.orchestrator.enums import DefaultTabStatus
+from ..enums import DefaultTabStatus
 
 
 class Tab:

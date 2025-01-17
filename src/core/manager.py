@@ -2,8 +2,8 @@ from typing_extensions import List, Optional
 
 from selenium.webdriver.chrome.options import Options
 
-from src.orchestrator.selenium_profile import SeleniumProfile
-from src.orchestrator.browser_config_builder import BrowserConfigBuilder
+from .selenium.profile import SeleniumProfile
+from .browser.browser_config_builder import BrowserConfigBuilder
 
 
 class SeleniumManager:

@@ -1,5 +1,5 @@
-from src.orchestrator.driver_creator import DriverCreator
-from src.orchestrator.browser_config_builder import BrowserConfigBuilder
+from .driver_creator import DriverCreator
+from .browser_config_builder import BrowserConfigBuilder
 
 
 class BrowserFactory:
