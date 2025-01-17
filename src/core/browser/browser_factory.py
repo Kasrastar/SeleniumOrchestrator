@@ -9,7 +9,7 @@ class BrowserFactory:
             "chrome": DriverCreator.create_chrome_driver,
             # "firefox": DriverCreator.create_firefox_driver,
             # "edge": DriverCreator.create_edge_driver,
-            # "remote": DriverCreator.create_remote_driver
+            "remote": DriverCreator.create_remote_driver
         }
 
     def create_browser(self, browser_name: str, options: BrowserConfigBuilder, connection: dict):

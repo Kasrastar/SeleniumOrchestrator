@@ -38,17 +38,9 @@ class DriverCreator:
     #     edge_service = EdgeService(EdgeDriverManager().install())
     #     return webdriver.Edge(service=edge_service, options=edge_options)
 
-    # @staticmethod
-    # def create_remote_driver(options: dict) -> webdriver.Remote:
-    #     capabilities = options.get("capabilities", {})
-    #     remote_url = options.get("remote_url", "http://localhost:4444/wd/hub")
-    #     return webdriver.Remote(command_executor=remote_url, desired_capabilities=capabilities)
-    #
-    # @staticmethod
-    # def _set_browser_options(browser_options, options: dict):
-    #     for option, value in options.items():
-    #         if isinstance(value, bool):
-    #             if value:
-    #                 browser_options.add_argument(option)
-    #         else:
-    #             browser_options.add_argument(f"{option}={value}")
+    @staticmethod
+    def create_remote_driver(options, connection) -> webdriver.Remote:
+        remote_url = connection.get('remote_url')
+        return webdriver.Remote(command_executor=remote_url, options=options)
+    
+

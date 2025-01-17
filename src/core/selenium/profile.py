@@ -1,18 +1,10 @@
 import selenium
 from selenium.webdriver.remote.webelement import WebElement
-from typing_extensions import Optional
 
-from chromedriver_py import binary_path
-from selenium.webdriver import Chrome
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 import selenium.webdriver.support.expected_conditions as ec
-from selenium.common.exceptions import (
-    SessionNotCreatedException,
-    NoSuchElementException
-)
+from selenium.common.exceptions import NoSuchElementException
 
 from ..browser.browser_factory import BrowserFactory
 from ..browser.browser_config_builder import BrowserConfigBuilder
@@ -55,7 +47,7 @@ class SeleniumProfile:
             options=options,
             connection=connection
         )
-        print(self.driver)
+        # print(self.driver)
         new_tab = Tab(
             name=tab_name,
             window_handle=self.driver.current_window_handle,
