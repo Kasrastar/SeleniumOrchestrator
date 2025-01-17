@@ -1,3 +1,4 @@
+import selenium
 from selenium.webdriver.remote.webelement import WebElement
 from typing_extensions import Optional
 
@@ -13,6 +14,8 @@ from selenium.common.exceptions import (
     NoSuchElementException
 )
 
+from src.orchestrator.browser_factory import BrowserFactory
+from src.orchestrator.browser_config_builder import BrowserConfigBuilder
 from src.orchestrator.enums import DefaultTabStatus, DefaultDriverStatus
 from src.orchestrator.tab import Tab
 
@@ -21,70 +24,80 @@ class SeleniumProfile:
 
     def __init__(
             self,
-            name: str,
+            driver_name: str,
             tab_name: str,
-            options: Options,
-            use_cache: bool = False,
-            path: Optional[str] = None,
-            explicit_wait: int = 5,
-            implicit_wait: int = 10,
+            profile_options: BrowserConfigBuilder,
+            connection: dict
     ):
-        self.status: DefaultDriverStatus = None  # noqa
-        self.driver: Chrome = None  # noqa
+
         self.tabs: list[Tab] = []
-        self.name = name
-        self.path = path
-        self.options = options
-        self.explicit_wait = explicit_wait
-        self.create_session(tab_name, implicit_wait, use_cache)
+        self.driver_name = driver_name
+        self.driver: selenium.webdriver.common = None
+        self.status: DefaultDriverStatus = DefaultDriverStatus.OPEN
+
+        self.create_session(
+            browser_name=connection.get('browser_type', 'chrome'),
+            tab_name=tab_name,
+            options=profile_options,
+            connection=connection
+        )
 
     def create_session(
             self,
+            browser_name: str,
             tab_name: str,
-            implicit_wait: int,
-            use_cache: bool = False
+            options: BrowserConfigBuilder,
+            connection: dict
     ) -> None:
-        try:
-            if use_cache:
-                self.options.add_argument('--user-data-dir=%s' % self.path)
-            self.driver = Chrome(
-                service=Service(
-                    executable_path=binary_path
-                ),
-                options=self.options
-            )
-        except SessionNotCreatedException as e:
-            ...
-            # if not hasattr(SeleniumProfile, 'driver'):
-            #     raise SeleniumErrors(str(e))
 
-        self.status = DefaultDriverStatus.OPEN
-        self.driver.implicitly_wait(implicit_wait)
-        self.tabs.append(Tab(
+        driver_factory: BrowserFactory = BrowserFactory()
+        self.driver = driver_factory.create_browser(
+            browser_name=browser_name,
+            options=options,
+            connection=connection
+        )
+        print(self.driver)
+        new_tab = Tab(
             name=tab_name,
             window_handle=self.driver.current_window_handle,
             status=DefaultTabStatus.ACTIVE
-        ))
+        )
+
+        self.tabs.append(new_tab)
 
     def get_tab(self, name: str) -> Tab | None:
-        for tab in self.tabs:
-            if tab.name == name:
-                return tab
-        return None
+        """
+        Retrieves a tab by its name.
+
+        :param name: The name of the tab to retrieve.
+        :return: The Tab object if found, otherwise None.
+        """
+        return next((tab for tab in self.tabs if tab.name == name), None)
 
     def update_driver_status(self, status: DefaultDriverStatus):
+        """
+        Updates the status of the driver.
+        :param status: The new status to set for the driver.
+        """
         self.status = status
 
-    def update_tab_status(self, name: str, status: DefaultTabStatus):
-        selected_tab = self.get_tab(name)
-        if selected_tab:
-            selected_tab.status = status
+    def update_tab_status(self, name: str, new_status: DefaultTabStatus):
+        """
+        Updates the status of a tab identified by its name.
+        :param name: The name of the tab to update.
+        :param new_status: The new status for the tab.
+        """
+        tab = self.get_tab(name)
+        if tab:
+            tab.update_status(new_status)
 
     def is_tab_exist(self, name: str) -> bool:
-        selected_tab = self.get_tab(name)
-        if selected_tab:
-            return True
-        return False
+        """
+        Checks if a tab with the given name exists.
+        :param name: The name of the tab to check.
+        :return: True if the tab exists, False otherwise.
+        """
+        return any(tab.name == name for tab in self.tabs)
 
     def close_driver(self):
         if not self.status == DefaultDriverStatus.CLOSED:
@@ -94,7 +107,7 @@ class SeleniumProfile:
     def close_tab(self, name: str):
         selected_tab = self.get_tab(name)
         if selected_tab:
-            if len(self.tabs)-1 == 0:
+            if len(self.tabs) - 1 == 0:
                 self.close_driver()
             else:
                 self.switch_to_tab(selected_tab.name)
@@ -102,23 +115,27 @@ class SeleniumProfile:
                 self.tabs.remove(selected_tab)
                 self.switch_to_tab(self.tabs[0].name)
 
-    def open_new_tab(self, name: str):
+    def new_tab(self, name: str) -> bool:
         if not self.status == DefaultDriverStatus.CLOSED:
             self.driver.switch_to.new_window()
-            self.tabs.append(Tab(
+
+            new_tab = Tab(
                 name=name,
                 window_handle=self.driver.current_window_handle,
                 status=DefaultTabStatus.ACTIVE
-            ))
+            )
 
-        for tab in self.tabs:
-            if tab.name != name:
-                self.update_tab_status(tab.name, DefaultTabStatus.INACTIVE)
+            self.tabs.append(new_tab)
+            [tab.update_status(DefaultTabStatus.INACTIVE) for tab in self.tabs if tab.name != name]
+            return True
+        else:
+            return False
 
     def switch_to_tab(self, name: str):
-        selected_tab = self.get_tab(name)
-        if selected_tab and not self.status == DefaultDriverStatus.CLOSED:
-            self.driver.switch_to.window(selected_tab.window_handle)
+        if not self.status == DefaultDriverStatus.CLOSED:
+            tab = self.get_tab(name)
+            if tab:
+                self.driver.switch_to.window(tab.window_handle)
 
     def get_tab_status(self, name: str) -> DefaultTabStatus:
         selected_tab = self.get_tab(name)
@@ -132,10 +149,10 @@ class SeleniumProfile:
                 "storageTypes": storage_type,
             })
 
-    def element_locator(self, by: By, addr: str) -> WebElement | None:
+    def element_locator(self, by: By, addr: str, explicit_wait: int = 10) -> WebElement | None:
         if not self.status == DefaultDriverStatus.CLOSED:
             try:
-                element = WebDriverWait(self.driver, self.explicit_wait).until(
+                element = WebDriverWait(self.driver, explicit_wait).until(
                     ec.presence_of_element_located((  # noqa
                         by, addr
                     ))
@@ -161,5 +178,5 @@ class SeleniumProfile:
             element.clear()
 
     def __del__(self):
-        if not self.status == DefaultDriverStatus.CLOSED:
+        if not self.status == DefaultDriverStatus.CLOSED and not self.driver is None:
             self.close_driver()
