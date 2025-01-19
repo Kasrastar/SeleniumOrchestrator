@@ -1,13 +1,14 @@
 from .driver_creator import DriverCreator
 from .browser_config_builder import BrowserConfigBuilder
 
+from ...utils.exceptions import BrowserInitializationError
 
 class BrowserFactory:
     def __init__(self):
         # Mapping of browser names to corresponding creation methods in DriverCreator
         self.driver_map = {
             "chrome": DriverCreator.create_chrome_driver,
-            # "firefox": DriverCreator.create_firefox_driver,
+            "firefox": DriverCreator.create_firefox_driver,
             # "edge": DriverCreator.create_edge_driver,
             "remote": DriverCreator.create_remote_driver
         }
@@ -24,4 +25,4 @@ class BrowserFactory:
         if browser_name in self.driver_map:
             return self.driver_map[browser_name](options, connection)
         else:
-            raise ValueError(f"Unsupported browser: {browser_name}")
+            raise BrowserInitializationError(browser_name)
