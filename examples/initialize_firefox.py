@@ -5,8 +5,7 @@ from src.utils.logger import logger
 
 chrome_connections = {
     'browser_type': 'firefox',
-    # 'binary_path': '/path/to/geckodriver'
-    'binary_path': r"E:\IDM\Compressed\geckodriver.exe"
+    'binary_path': '/path/to/geckodriver'
 }
 
 chrome_driver_options = BrowserConfigBuilder('firefox').set_headless().build()
