@@ -1,5 +1,6 @@
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.edge.options import Options as EdgeOptions
 
 
@@ -35,6 +36,14 @@ class BrowserConfigBuilder:
             self.options.add_argument("--headless")
         return self
 
+    def set_fullscreen(self):
+        """
+        Sets the browser to fullscreen mode.
+        :return: The builder instance for chaining.
+        """
+        self.options.add_argument("--start-maximized")
+        return self
+
     def set_window_size(self, width: int, height: int):
         """
         Sets the browser window size.
@@ -67,7 +76,7 @@ class BrowserConfigBuilder:
         :param user_agent: The user-agent string to set.
         :return: The builder instance for chaining.
         """
-        self.options.add_argument(f"user-agent={user_agent}")
+        self.options.add_argument(f"--user-agent={user_agent}")
         return self
 
     def set_user_data_dir(self, path: str):
@@ -82,6 +91,24 @@ class BrowserConfigBuilder:
             raise ValueError(
                 f"User data directory is only supported for Chrome or Edge browsers. Current browser: {self.browser_name}"
             )
+        return self
+
+    def set_firefox_profile(self, profile_path: str):
+        """
+        Overrides the default Firefox profile used by the WebDriver.
+        :param profile_path: The filesystem path to the Firefox profile directory.
+        :return: The builder instance for chaining.
+        """
+        if self.browser_name != 'firefox':
+            raise ValueError(
+                f"Firefox profile can only be set for Firefox browser. Current browser: {self.browser_name}"
+            )
+        
+        self.options.add_argument("-profile")
+        self.options.add_argument(profile_path)
+
+        # profile = FirefoxProfile(profile_path)
+        # self.options.profile = profile
         return self
 
     def build(self):

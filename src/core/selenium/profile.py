@@ -25,7 +25,7 @@ class SeleniumProfile:
         self.driver_name = driver_name
         self.driver: selenium.webdriver.common = None
         self.status: DefaultDriverStatus = DefaultDriverStatus.OPEN
-
+        
         self.create_session(
             browser_name=connection.get('browser_type', 'chrome'),
             tab_name=tab_name,
@@ -40,20 +40,17 @@ class SeleniumProfile:
             options: BrowserConfigBuilder,
             connection: dict
     ) -> None:
-
         driver_factory: BrowserFactory = BrowserFactory()
         self.driver = driver_factory.create_browser(
             browser_name=browser_name,
             options=options,
             connection=connection
         )
-        # print(self.driver)
         new_tab = Tab(
             name=tab_name,
             window_handle=self.driver.current_window_handle,
             status=DefaultTabStatus.ACTIVE
         )
-
         self.tabs.append(new_tab)
 
     def get_tab(self, name: str) -> Tab | None:

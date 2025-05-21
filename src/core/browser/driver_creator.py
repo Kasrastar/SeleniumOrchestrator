@@ -65,6 +65,18 @@ class DriverCreator:
                 service=FirefoxService(executable_path=binary_path),
                 options=options
             )
+            
+            def is_arg_exists(options: BrowserConfigBuilder, arg: str):
+                arg_list = options.arguments
+                if arg in arg_list:
+                    return True
+                else:
+                    return False
+
+            
+            if is_arg_exists(options, "--start-maximized"):
+                driver.maximize_window()
+
             logger.info("Firefox driver successfully created")
             return driver
 

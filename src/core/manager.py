@@ -47,7 +47,6 @@ class SeleniumManager:
         SeleniumProfile with the provided parameters (driver_name, tab_name, profile_options,
         connection), adds it to the list of profiles, and then returns the new instance.
         """
-        
         instance = self.get_profile(driver_name)
         if instance:
             return instance
