@@ -57,4 +57,7 @@ class TabService:
         self.session.execute_cdp('Storage.clearDataForOrigin', {'origin': origin, 'storageTypes': storage})
 
     def _find(self, name: str) -> Optional[Tab]:
-        return next((t for t in self.tabs if t.name == name), None)
+        return next((t for t in self.tabs if t.name == name), None) 
+    
+    def get_active_tab(self) -> Optional[Tab]:
+        return next((tab for tab in self.tabs if tab.status == DefaultTabStatus.ACTIVE), None)

@@ -5,10 +5,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Testcase Builder",
+      "name": "Python: Script",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/testcase_builder.py",
+      "program": "${workspaceFolder}/<your-script>.py",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
       "justMyCode": true

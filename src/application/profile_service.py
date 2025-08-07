@@ -5,8 +5,8 @@ from ..infra.browser_config_builder import BrowserConfigBuilder
 from ..infra.selenium_session import SeleniumSession
 from ..domain.driver_status import DefaultDriverStatus
 from ..domain.tab import Tab, DefaultTabStatus
-from ..application.tab_service import TabService
-from ..application.element_service import ElementService
+from .tab_service import TabService
+from .element_service import ElementService
 from ..utils.logger import logger
 
 
@@ -15,46 +15,25 @@ class Profile:
         self.driver_name = driver_name
         self.session = session
         self.driver_status = DefaultDriverStatus.OPEN
-        self.tabs: List[Tab] = []
+        # self.tabs: List[Tab] = []
         self.tab_service = TabService(session)
         self.element_service = ElementService(session)
 
         logger.info('requet to initiate new driver.')
-        self.session.open(
+
+        self.tab_service.start(
             browser_type=connection.get('browser_type', 'chrome'),
             options=profile_options,
-            connection=connection
+            connection=connection,
+            first_tab_name=tab_name
         )
-        
-        # print(self.session.driver)
-        window_handle = self.session.driver.current_window_handle  # type: ignore
-        self.tabs.append(
-            Tab(
-                name=tab_name, 
-                window_handle=window_handle, 
-                status=DefaultTabStatus.ACTIVE
-            )
-        )
-        
+
     def close(self):
         self.session.close()
         self.driver_status = DefaultDriverStatus.CLOSED
 
-    def new_tab(self, tab_name: str):
-        handle = self.session.new_tab()
-        # Set current active tab to inactive
-        for tab in self.tabs:
-            if tab.status == DefaultTabStatus.ACTIVE:
-                tab.update_status(DefaultTabStatus.INACTIVE)
-        # Add new tab as active
-        self.tabs.append(Tab(name=tab_name, window_handle=handle, status=DefaultTabStatus.ACTIVE))
-        self.session.switch_tab(handle)
-
-    def get_active_tab(self) -> Optional[Tab]:
-        return next((tab for tab in self.tabs if tab.status == DefaultTabStatus.ACTIVE), None)
-
-
-class ProfileManager:
+ 
+class ProfileService:
     def __init__(self):
         self.profiles: Dict[str, Profile] = {}
 
@@ -79,11 +58,6 @@ class ProfileManager:
         if profile:
             profile.close()
             del self.profiles[driver_name]
-
-    def new_tab_profile(self, driver_name: str, tab_name: str):
-        profile = self.profiles.get(driver_name)
-        if profile:
-            profile.new_tab(tab_name)
 
     def get_profile(self, driver_name: str) -> Optional[Profile]:
         return self.profiles.get(driver_name)
