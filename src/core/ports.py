@@ -36,8 +36,6 @@ class WaitCondition:
     FRAME_TO_BE_AVAILABLE_AND_SWITCH_TO_IT = 'frame_to_be_available_and_switch_to_it'
     INVISIBILITY_OF_ELEMENT = 'invisibility_of_element'
     INVISIBILITY_OF_ELEMENT_LOCATED = 'invisibility_of_element_located'
-    PRESENCE_OF_ALL_ELEMENTS_LOCATED = 'presence_of_all_elements_located'
-    PRESENCE_OF_ELEMENT_LOCATED = 'presence_of_element_located'
     STALENESS_OF = 'staleness_of'
     TEXT_TO_BE_PRESENT_IN_ELEMENT = 'text_to_be_present_in_element'
     TEXT_TO_BE_PRESENT_IN_ELEMENT_VALUE = 'text_to_be_present_in_element_value'
@@ -47,8 +45,6 @@ class WaitCondition:
     URL_MATCHES = 'url_matches'
     URL_TO_BE = 'url_to_be'
     VISIBILITY_OF = 'visibility_of'
-    VISIBILITY_OF_ELEMENT_LOCATED = 'visibility_of_element_located'
-    VISIBILITY_OF_ALL_ELEMENTS_LOCATED = 'visibility_of_all_elements_located'
 
 
 class BrowserSessionPort(ABC):

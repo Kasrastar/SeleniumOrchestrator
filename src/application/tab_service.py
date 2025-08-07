@@ -12,7 +12,8 @@ class TabService:
 
     def start(self, browser_type: str, options: Any, connection: dict, first_tab_name: str):
         self.session.open(browser_type, options, connection)
-        handle = self.session.new_tab()
+        # handle = self.session.new_tab()
+        handle = self.session.driver.current_window_handle  # type: ignore
         tab = Tab(name=first_tab_name, window_handle=handle, status=DefaultTabStatus.ACTIVE)
         self.tabs.append(tab)
 
