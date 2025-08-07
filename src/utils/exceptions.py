@@ -1,4 +1,4 @@
-from .logger import logger  # Ensure you import the logger here
+from .logger import logger  
 
 class SeleniumWrapperException(Exception):
     """Base class for all exceptions raised by the Selenium Wrapper."""
@@ -14,7 +14,7 @@ class BrowserInitializationError(SeleniumWrapperException):
         self.browser_name = browser_name
         self.message = f"{message}: {browser_name}"
         super().__init__(self.message)
-        self.log_exception()  # Log the exception when it's raised
+        self.log_exception() 
 
 class TabManagementError(SeleniumWrapperException):
     """Raised when there is an issue with managing tabs."""
@@ -23,7 +23,7 @@ class TabManagementError(SeleniumWrapperException):
         self.tab_name = tab_name
         self.message = f"{message}: {tab_name}"
         super().__init__(self.message)
-        self.log_exception()  # Log the exception when it's raised
+        self.log_exception() 
 
 class DriverNotFoundError(SeleniumWrapperException):
     """Raised when a WebDriver binary is not found."""
@@ -32,7 +32,7 @@ class DriverNotFoundError(SeleniumWrapperException):
         self.driver_name = driver_name
         self.message = f"{message}: {driver_name}"
         super().__init__(self.message)
-        self.log_exception()  # Log the exception when it's raised
+        self.log_exception() 
 
 class BrowserConfigError(SeleniumWrapperException):
     """Raised when there is an error with the browser configuration."""
@@ -40,7 +40,7 @@ class BrowserConfigError(SeleniumWrapperException):
     def __init__(self, message: str = "Error in browser configuration"):
         self.message = message
         super().__init__(self.message)
-        self.log_exception()  # Log the exception when it's raised
+        self.log_exception() 
 
 class InvalidTabOperationError(SeleniumWrapperException):
     """Raised when there is an invalid operation on a tab."""
@@ -49,4 +49,4 @@ class InvalidTabOperationError(SeleniumWrapperException):
         self.operation = operation
         self.message = f"{message}: {operation}"
         super().__init__(self.message)
-        self.log_exception()  # Log the exception when it's raised
+        self.log_exception()  
