@@ -1,40 +1,31 @@
-from src.core.browser.browser_config_builder import BrowserConfigBuilder
-from src.core.manager import SeleniumManager
+from src.core.ports import Locator
+from src.application.profile_service import ProfileService
+from src.infra.browser_config_builder import BrowserConfigBuilder
+from src.infra.selenium_session import SeleniumSession
 from src.utils.logger import logger
 
+from selenium.webdriver.common.keys import Keys
 
-chrome_connections = {
-    'browser_type': 'firefox',
-    'binary_path': '/path/to/geckodriver'
-}
 
-chrome_driver_options = BrowserConfigBuilder('firefox').set_headless().build()
-logger.info('gecko driver options created successfully')
+options = BrowserConfigBuilder('firefox').set_browser_profile('/home/kasrastar/Desktop/random').build()
+session = SeleniumSession()
+profile_service = ProfileService()
 
-manager = SeleniumManager()
-logger.info('Selenium manager created successfully')
-
-chrome = manager.new_profile(
-    'test initilize gecko driver',
-    'test tab',
-    chrome_driver_options,
-    chrome_connections
+new_profile = profile_service.new_profile(
+    driver_name='test_driver',
+    tab_name='initial_tab',
+    session=session,
+    profile_options=options,
+    connection={
+        'browser_type': 'firefox',
+        'binary_path':  '/usr/bin/geckodriver'
+    }
 )
-logger.info('gecko driver created successfully')
 
-chrome.driver.get('https://demoqa.com/')
-logger.info('Navigated to demoqa.com')
+# localhost:53399 remote driver
 
-chrome.new_tab('new tab')
-logger.info('New tab created')
+logger.info('Profile created successfully')
 
-if chrome.is_tab_exist('new tab'):
-    logger.info("'new tab' exists between tabs")
-
-if chrome.is_tab_exist('test tab'):
-    logger.info("'test tab' exists between tabs")
-
-logger.info('All tabs checked successfully')
-
-manager.remove_profile('test initilize gecko driver')
-logger.info('gecko driver closed and removed successfully')
+url = 'https://www.google.com'
+new_profile.session.get(url)
+logger.info(f'Navigated to {url}')
