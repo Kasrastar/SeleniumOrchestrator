@@ -52,111 +52,107 @@ Here's a simple example to get started with **SeleniumOrchestrator**:
 ### Initialize a Chrome Driver:
 
 ```python 
-from src.core.browser.browser_config_builder import BrowserConfigBuilder
-from src.core.manager import SeleniumManager
+# from chromedriver_py import binary_path
+
+
+from src.application.profile_service import ProfileService
+from src.infra.browser_config_builder import BrowserConfigBuilder
+from src.infra.selenium_session import SeleniumSession
 from src.utils.logger import logger
+
 
 
 chrome_connections = {
     'browser_type': 'chrome',
+    # 'binary_path': binary_path
     'binary_path': '/path/to/chromedriver'
 }
 
-chrome_driver_options = BrowserConfigBuilder('chrome').set_headless().build()
-manager = SeleniumManager()
+# due the remote driver, is chrome-standalone, the options should be chrome type
+options = BrowserConfigBuilder('chrome').set_browser_profile('/home/kasrastar/Desktop/random').build()
+session = SeleniumSession()
+profile_service = ProfileService()
 
-chrome = manager.new_profile(
-    'test driver',
-    'test tab',
-    chrome_driver_options,
-    chrome_connections
+new_profile = profile_service.new_profile(
+    driver_name='test_driver',
+    tab_name='initial_tab',
+    session=session,
+    profile_options=options,
+    connection=chrome_connections
 )
 
-chrome.driver.get('https://demoqa.com/')
-
-chrome.new_tab('new tab')
-
-if chrome.is_tab_exist('new tab'):
-    logger.info("'new tab' exists between tabs")
-
-if chrome.is_tab_exist('test tab'):
-    logger.info("'test tab' exists between tabs")
-
-manager.remove_profile('test initilize chrome driver')
+url = 'https://demoqa.com'
+new_profile.session.get(url)
+logger.info('Navigated to demoqa.com')
 ```
 
 ### Initialize a Firefox Driver:
 
 ```python
-from src.core.browser.browser_config_builder import BrowserConfigBuilder
-from src.core.manager import SeleniumManager
+from src.core.ports import Locator
+from src.application.profile_service import ProfileService
+from src.infra.browser_config_builder import BrowserConfigBuilder
+from src.infra.selenium_session import SeleniumSession
 from src.utils.logger import logger
 
+from selenium.webdriver.common.keys import Keys
 
-chrome_connections = {
-    'browser_type': 'firefox',
-    'binary_path': '/path/to/geckodriver'
-}
 
-chrome_driver_options = BrowserConfigBuilder('firefox').set_headless().build()
-manager = SeleniumManager()
+options = BrowserConfigBuilder('firefox').set_browser_profile('/home/kasrastar/Desktop/random').build()
+session = SeleniumSession()
+profile_service = ProfileService()
 
-chrome = manager.new_profile(
-    'test gecko driver',
-    'test tab',
-    chrome_driver_options,
-    chrome_connections
+new_profile = profile_service.new_profile(
+    driver_name='test_driver',
+    tab_name='initial_tab',
+    session=session,
+    profile_options=options,
+    connection={
+        'browser_type': 'firefox',
+        'binary_path':  '/usr/bin/geckodriver'
+    }
 )
 
-chrome.driver.get('https://demoqa.com/')
+# localhost:53399 remote driver
 
-chrome.new_tab('new tab')
+logger.info('Profile created successfully')
 
-if chrome.is_tab_exist('new tab'):
-    logger.info("'new tab' exists between tabs")
-
-if chrome.is_tab_exist('test tab'):
-    logger.info("'test tab' exists between tabs")
-
-manager.remove_profile('test initilize gecko driver')
+url = 'https://www.google.com'
+new_profile.session.get(url)
+logger.info(f'Navigated to {url}')
 ```
 
 ### Initialize Remote WebDriver:
 
 ```python
-from src.core.browser.browser_config_builder import BrowserConfigBuilder
-from src.core.manager import SeleniumManager
+from src.application.profile_service import ProfileService
+from src.infra.browser_config_builder import BrowserConfigBuilder
+from src.infra.selenium_session import SeleniumSession
 from src.utils.logger import logger
 
 
-chrome_connections = {
+
+remote_connections = {
     'browser_type': 'remote',
     'remote_url': 'http://localhost:7997/wd/hub',
 }
 
 # due the remote driver, is chrome-standalone, the options should be chrome type
-chrome_driver_options = BrowserConfigBuilder('chrome').set_headless().build()
-manager = SeleniumManager()
-logger.info('Selenium manager created successfully')
+options = BrowserConfigBuilder('chrome').set_browser_profile('/home/kasrastar/Desktop/random').build()
+session = SeleniumSession()
+profile_service = ProfileService()
 
-chrome = manager.new_profile(
-    'test remote driver',
-    'test tab',
-    chrome_driver_options,
-    chrome_connections
+new_profile = profile_service.new_profile(
+    driver_name='test_driver',
+    tab_name='initial_tab',
+    session=session,
+    profile_options=options,
+    connection=remote_connections
 )
 
-chrome.driver.get('https://demoqa.com/')
-
-chrome.new_tab('new tab')
-
-if chrome.is_tab_exist('new tab'):
-    logger.info("'new tab' exists between tabs")
-
-if chrome.is_tab_exist('test tab'):
-    logger.info("'test tab' exists between tabs")
-
-manager.remove_profile('test initilize remote driver')
+url = 'https://demoqa.com'
+new_profile.session.get(url)
+logger.info('Navigated to demoqa.com')
 ```
 
 ---
