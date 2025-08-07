@@ -21,8 +21,8 @@ class ElementService:
         if el:
             el.clear()
 
-    def find_all(self, locator: Locator, timeout: int = 10, root_element: Optional[Any] = None) -> List[Any]:
-        return self.session.find_elements(locator, timeout=timeout, scroll_into_view=True, root_element=root_element)
+    def find_all(self, locator: Locator, timeout: int = 15, scroll_into_view: bool = False, root_element: Optional[Any] = None) -> List[Any]:
+        return self.session.find_elements(locator, timeout=timeout, scroll_into_view=scroll_into_view, root_element=root_element)
 
     def _locate(self, locator: Locator, condition: str, root_handle: Optional[str] = None, root_element: Optional[Any] = None) -> Optional[Any]:
         if root_handle:
