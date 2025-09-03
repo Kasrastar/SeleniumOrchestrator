@@ -2,7 +2,7 @@ from typing import Optional, Any
 
 from ..core.ports import BrowserSessionPort
 from ..domain.tab import Tab, DefaultTabStatus
-from ..domain.driver_status import DefaultDriverStatus
+from ..domain.driver import DefaultDriverStatus
 
 class TabService:
     def __init__(self, session: BrowserSessionPort):

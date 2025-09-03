@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from ..infra.browser_config_builder import BrowserConfigBuilder
 from ..infra.selenium_session import SeleniumSession
-from ..domain.driver_status import DefaultDriverStatus
+from ..domain.driver import DefaultDriverStatus
 from ..domain.tab import Tab, DefaultTabStatus
 from .tab_service import TabService
 from .element_service import ElementService
