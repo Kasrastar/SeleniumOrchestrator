@@ -1,0 +1,21 @@
+# Testing Requirements for SeleniumOrchestrator
+# Install with: pip install -r requirements/test-requirements.txt
+
+# Core testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-html>=3.2.0
+pytest-xdist>=3.3.1
+pytest-timeout>=2.1.0
+pytest-rerunfailures>=12.0
+pytest-mock>=3.11.1
+
+# Coverage and reporting
+coverage>=7.2.0
+
+# Test utilities
+faker>=19.0.0
+hypothesis>=6.82.0
+
+# Include base requirements
+-r base-requirements.txt

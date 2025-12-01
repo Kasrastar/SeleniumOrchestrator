@@ -1,0 +1,37 @@
+{
+  "users": {
+    "valid_user": {
+      "username": "testuser",
+      "password": "TestPass123!",
+      "email": "testuser@example.com"
+    },
+    "admin_user": {
+      "username": "admin",
+      "password": "AdminPass123!",
+      "email": "admin@example.com"
+    }
+  },
+  "urls": {
+    "demoqa": {
+      "base_url": "https://demoqa.com",
+      "login_path": "/login",
+      "home_path": "/",
+      "profile_path": "/profile"
+    }
+  },
+  "browsers": {
+    "chrome": {
+      "binary_path": "/usr/bin/chromedriver",
+      "options": ["--no-sandbox", "--disable-dev-shm-usage"]
+    },
+    "firefox": {
+      "binary_path": "/usr/bin/geckodriver",
+      "options": ["--headless"]
+    }
+  },
+  "timeouts": {
+    "short": 5,
+    "medium": 10,
+    "long": 30
+  }
+}
