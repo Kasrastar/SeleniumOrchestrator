@@ -2,6 +2,7 @@
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
+import os
 
 class BrowserConfigBuilder:
     BROWSER_OPTIONS_MAP = {
@@ -36,6 +37,14 @@ class BrowserConfigBuilder:
         self.options.add_argument("--disable-gpu")
         return self
 
+    def set_no_sandbox(self):
+        self.options.add_argument("--no-sandbox")
+        return self
+
+    def disable_dev_shm_usage(self):
+        self.options.add_argument("--disable-dev-shm-usage")
+        return self
+
     def set_incognito(self):
         self.options.add_argument("--incognito")
         return self
@@ -47,7 +56,9 @@ class BrowserConfigBuilder:
     def set_browser_profile(self, path: str):
         if self.browser_name in ['chrome', 'edge']:
             self.options.add_argument(f'--user-data-dir={path}')
+            os.makedirs(path, exist_ok=True)
         elif self.browser_name == 'firefox':
+            os.makedirs(path, exist_ok=True)
             self.options.add_argument("-profile")
             self.options.add_argument(path)
         else:

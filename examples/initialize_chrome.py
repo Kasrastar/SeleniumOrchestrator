@@ -10,12 +10,12 @@ from src.utils.logger import logger
 
 chrome_connections = {
     'browser_type': 'chrome',
-    # 'binary_path': binary_path
+    #  'binary_path': binary_path
     'binary_path': '/path/to/chromedriver'
 }
 
 # due the remote driver, is chrome-standalone, the options should be chrome type
-options = BrowserConfigBuilder('chrome').set_browser_profile('/home/kasrastar/Desktop/random').build()
+options = BrowserConfigBuilder('chrome').set_no_sandbox().disable_dev_shm_usage().set_browser_profile('./profiles/test_profile').build()
 session = SeleniumSession()
 profile_service = ProfileService()
 
