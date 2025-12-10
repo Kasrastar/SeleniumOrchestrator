@@ -412,6 +412,64 @@ login_page.login("user", "pass")
 assert login_page.is_logged_in()
 ```
 
+### Real-World Example: JiraLoginPage
+
+**File:** `src/pages/jira_login_page.py`
+
+A production-ready implementation for Jira login automation:
+
+**Key Features:**
+- All locators based on actual HTML structure from https://jira.inside45.ir
+- Comprehensive element verification methods
+- Password visibility toggle support
+- Remember me checkbox functionality
+- Error handling with screenshots
+- Multiple login submission methods (click, Enter key)
+- Field validation and state checking
+- Jira version detection
+- Already-logged-in detection
+
+**Usage Example:**
+```python
+from src.pages.jira_login_page import JiraLoginPage
+
+jira_login = JiraLoginPage(session, base_url="https://jira.inside45.ir")
+jira_login.navigate()
+jira_login.wait_for_page_ready()
+
+# Method 1: Composite action
+jira_login.login("username", "password", remember_me=True)
+
+# Method 2: With screenshot on failure
+success, error = jira_login.login_with_screenshot("username", "password")
+
+# Verify login
+if jira_login.is_login_successful():
+    print("Logged in successfully!")
+else:
+    print(f"Login failed: {jira_login.get_error_message()}")
+```
+
+**Locators (based on actual Jira HTML):**
+```python
+USERNAME_FIELD = Locator(By.ID, "username-field")
+PASSWORD_FIELD = Locator(By.ID, "password-field")
+LOGIN_BUTTON = Locator(By.ID, "login-button")
+REMEMBER_ME_CHECKBOX = Locator(By.ID, "rememberMe-uid1")
+TOGGLE_PASSWORD_BUTTON = Locator(By.CSS_SELECTOR, "[data-testid='toggle-password-button']")
+```
+
+**Advanced Methods:**
+- `verify_login_page_elements()` - Returns dict of all element states
+- `get_jira_version()` - Extracts Jira version from page metadata
+- `is_logged_in_already()` - Checks if session already authenticated
+- `submit_form_by_enter_key()` - Natural keyboard-based submission
+- `take_screenshot_on_error()` - Automatic failure documentation
+
+**Tests:** See `tests/e2e/test_jira_login.py` for comprehensive E2E tests.
+
+**Example Script:** See `examples/jira_login_example.py` for 7 different usage scenarios.
+
 ### Creating New Page Objects
 
 **Step-by-Step Guide:**
@@ -510,15 +568,19 @@ SeleniumOrchestrator/
 │   ├── infra/           # Selenium implementations
 │   ├── application/     # High-level services
 │   ├── pages/           # Page Object Model (POM) classes
-│   │   ├── base_page.py      # Base page with common functionality
-│   │   ├── login_page.py     # Example login page object
-│   │   └── home_page.py      # Example home page object
+│   │   ├── base_page.py         # Base page with common functionality
+│   │   ├── login_page.py        # Example login page object
+│   │   ├── home_page.py         # Example home page object
+│   │   ├── jira_login_page.py   # Production Jira login page
+│   │   └── __init__.py          # Exports all page objects
 │   └── utils/           # Cross-cutting concerns
 ├── tests/               # Test suite (pytest)
 │   ├── conftest.py           # Pytest fixtures and configuration
 │   ├── unit/                 # Unit tests
 │   ├── integration/          # Integration tests
 │   ├── e2e/                  # End-to-end tests
+│   │   ├── test_pom_workflows.py  # POM workflow tests
+│   │   └── test_jira_login.py     # Jira login tests (30+ tests)
 │   ├── test_data/            # Test data management
 │   ├── fixtures/             # Additional fixtures
 │   ├── logs/                 # Test logs (auto-generated)
@@ -527,7 +589,8 @@ SeleniumOrchestrator/
 │   ├── initialize_chrome.py   # Chrome driver setup example
 │   ├── initialize_firefox.py  # Firefox driver setup example
 │   ├── initialize_remote.py   # Remote driver setup example
-│   └── pom_example.py         # Page Object Model usage examples
+│   ├── pom_example.py         # Page Object Model usage examples
+│   └── jira_login_example.py  # Jira login automation (7 scenarios)
 ├── requirements/        # Dependency specifications
 │   ├── base-requirements.txt  # Core dependencies
 │   └── test-requirements.txt  # Testing dependencies
@@ -956,6 +1019,7 @@ print(active_tab)  # Shows name, handle, status
 | 1.0.0   | 2025-12-01 | Initial documentation created |
 | 1.1.0   | 2025-12-01 | Added Page Object Model (POM) structure with BasePage, LoginPage, HomePage, and usage examples |
 | 1.2.0   | 2025-12-01 | Added comprehensive pytest testing framework with unit, integration, and E2E tests; TestData management; fixtures; and test utilities |
+| 1.2.1   | 2025-12-10 | Added JiraLoginPage for production Jira automation (jira.inside45.ir) with 40+ methods, 30+ E2E tests, and 7 usage examples |
 
 ---
 

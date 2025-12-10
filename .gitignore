@@ -288,4 +288,7 @@ pyrightconfig.json
 
 .idea/
 
-# End of https://www.toptal.com/developers/gitignore/api/python,pycharm
+# exclude profile files
+profiles/
+
+# End of https://www.toptal.com/developers/gitignore/api/python,pycharm"main.py" 
