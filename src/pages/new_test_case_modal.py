@@ -125,6 +125,7 @@ class NewTestCaseModal(BasePage):
     
     CANCEL_BUTTON = Locator(By.CSS_SELECTOR, "button[data-testid='creation-modal-cancel-button']")
     CREATE_BUTTON = Locator(By.CSS_SELECTOR, "button[data-testid='creation-modal-create-button']")
+    CREATE_AND_EDIT_BUTTON = Locator(By.XPATH, '//button[@data-testid="creation-modal-create-button"]')
     CREATE_DROPDOWN_BUTTON = Locator(By.CSS_SELECTOR, "button[data-testid='creation-modal-footer-dropdown']")
     
     # Dropdown menu options (appears when clicking dropdown arrow)
@@ -516,13 +517,8 @@ class NewTestCaseModal(BasePage):
             self.logger.info("Looking for 'Create and Edit' option...")
             
             locators_to_try = [
-                Locator(By.XPATH, "//a[contains(text(), 'Create and Edit')]"),
-                Locator(By.XPATH, "//a[text()='Create and Edit']"),
-                Locator(By.XPATH, "//div[@id='createTestCase-submit-menu']//a[contains(text(), 'Create and Edit')]"),
-                Locator(By.XPATH, "//div[contains(@class, 'aui-dropdown2')]//a[contains(text(), 'Create and Edit')]"),
-                Locator(By.XPATH, "//li[@class='menu-item']//a[contains(text(), 'Create and Edit')]"),
-                Locator(By.LINK_TEXT, "Create and Edit"),
-                Locator(By.PARTIAL_LINK_TEXT, "Create and Edit"),
+                Locator(By.XPATH, '//li[@data-testid="creation-modal-footer-create-and-edit-item"]'),
+                Locator(By.XPATH, "//a[contains(text(), 'Create and edit')]"),
             ]
             
             edit_option = None
@@ -549,6 +545,7 @@ class NewTestCaseModal(BasePage):
                 # Try clicking with JavaScript as fallback
                 try:
                     edit_option.click()
+                    self.find_element(self.CREATE_AND_EDIT_BUTTON, condition=WaitCondition.ELEMENT_TO_BE_CLICKABLE).click()
                 except Exception as e:
                     self.logger.warning(f"Regular click failed, trying JavaScript click: {e}")
                     self.session.driver.execute_script("arguments[0].click();", edit_option)
@@ -563,7 +560,8 @@ class NewTestCaseModal(BasePage):
                 except:
                     pass
                 return False
-                
+            
+
         except Exception as e:
             self.logger.error(f"Failed to click Create and Edit: {e}")
             import traceback
