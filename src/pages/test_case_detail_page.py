@@ -29,8 +29,9 @@ class TestCaseDetailPage(BasePage):
     managing test case information.
     """
 
-    def __init__(self, session: SeleniumSession, test_case_key: Optional[str] = None):
+    def __init__(self, session: SeleniumSession, base_url: Optional[str] = "https://jira.inside45.ir", test_case_key: Optional[str] = None):
         super().__init__(session)
+        self.base_url = base_url    
         self.test_case_key = test_case_key
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         if test_case_key:
@@ -243,6 +244,28 @@ class TestCaseDetailPage(BasePage):
     
     # ==================== Test Steps Methods (Step-by-Step Mode) ====================
     
+    def wait_for_step_count(self, expected_count: int, timeout: int = 5) -> bool:
+        """Wait for the steps count to reach the expected number.
+        
+        Args:
+            expected_count: Expected number of steps
+            timeout: Maximum time to wait in seconds
+        
+        Returns:
+            bool: True if count reached, False if timeout
+        """
+        from time import time
+        start_time = time()
+        while time() - start_time < timeout:
+            current_count = self.get_steps_count()
+            if current_count >= expected_count:
+                self.logger.info(f"Step count reached {current_count}")
+                return True
+            sleep(0.3)
+        
+        self.logger.warning(f"Timeout waiting for step count to reach {expected_count}")
+        return False
+    
     def get_steps_count(self) -> int:
         """Get the number of test steps currently added."""
         try:
@@ -276,8 +299,10 @@ class TestCaseDetailPage(BasePage):
         selector = f"rich-text[name='stepDescription-{step_index}'] .ktm-editor-html-viewer[contenteditable='true']"
         locator = Locator(By.CSS_SELECTOR, selector)
         try:
-            return self.find_element(locator, timeout=5)
-        except Exception:
+            element = self.find_element(locator, timeout=5, condition=WaitCondition.VISIBILITY_OF_ELEMENT_LOCATED)
+            return element
+        except Exception as e:
+            self.logger.warning(f"Could not find step {step_index} description editor: {e}")
             return None
     
     def get_step_test_data_editor(self, step_index: int) -> Optional[WebElement]:
@@ -285,8 +310,10 @@ class TestCaseDetailPage(BasePage):
         selector = f"rich-text[name='stepTestData-{step_index}'] .ktm-editor-html-viewer[contenteditable='true']"
         locator = Locator(By.CSS_SELECTOR, selector)
         try:
-            return self.find_element(locator, timeout=5)
-        except Exception:
+            element = self.find_element(locator, timeout=5, condition=WaitCondition.VISIBILITY_OF_ELEMENT_LOCATED)
+            return element
+        except Exception as e:
+            self.logger.warning(f"Could not find step {step_index} test data editor: {e}")
             return None
     
     def get_step_expected_result_editor(self, step_index: int) -> Optional[WebElement]:
@@ -294,8 +321,10 @@ class TestCaseDetailPage(BasePage):
         selector = f"rich-text[name='stepExpectedResult-{step_index}'] .ktm-editor-html-viewer[contenteditable='true']"
         locator = Locator(By.CSS_SELECTOR, selector)
         try:
-            return self.find_element(locator, timeout=5)
-        except Exception:
+            element = self.find_element(locator, timeout=5, condition=WaitCondition.VISIBILITY_OF_ELEMENT_LOCATED)
+            return element
+        except Exception as e:
+            self.logger.warning(f"Could not find step {step_index} expected result editor: {e}")
             return None
     
     def enter_step_description(self, step_index: int, description: str, retries: int = 3) -> bool:
@@ -310,31 +339,71 @@ class TestCaseDetailPage(BasePage):
         Returns:
             bool: True if successful
         """
+
+        # sleep(2)
+
         for attempt in range(retries):
             try:
-                # Refind element each time to avoid stale reference
-                editor = self.get_step_description_editor(step_index)
-                if not editor:
+                self.logger.info(f"Attempt {attempt + 1}/{retries} to enter description for step {step_index}")
+                
+                # Get and click placeholder to activate the editor
+                placeholder = self.get_step_description_editor(step_index)
+                if not placeholder:
                     if attempt < retries - 1:
-                        sleep(0.5)
+                        self.logger.warning(f"Placeholder not found, retrying...")
+                        sleep(1)
                         continue
+                    self.logger.error(f"Could not find placeholder editor for step {step_index}")
                     return False
                 
-                editor.click()
+                self.logger.info(f"Clicking placeholder for step {step_index}")
+                placeholder.click()
+                sleep(2)  # Wait for Angular/Froala to activate
+                
+                # Find the activated Froala editor - try multiple selectors
+                selectors = [
+                    f"rich-text[name='stepDescription-{step_index}'] .fr-wrapper .fr-element.fr-view[contenteditable='true']",
+                    f"rich-text[name='stepDescription-{step_index}'] .fr-element.fr-view[contenteditable='true']",
+                    f"rich-text[name='stepDescription-{step_index}'] div[contenteditable='true'].fr-element"
+                ]
+                
+                activated_editor = None
+                for selector in selectors:
+                    try:
+                        activated_locator = Locator(By.CSS_SELECTOR, selector)
+                        activated_editor = self.find_element(activated_locator, timeout=2)
+                        if activated_editor:
+                            self.logger.info(f"Found activated editor with selector: {selector}")
+                            break
+                    except Exception:
+                        continue
+                
+                if not activated_editor:
+                    raise Exception("Could not find activated editor with any selector")
+                
+                # Click on the activated editor to ensure it has focus
+                self.logger.info(f"Clicking activated editor to ensure focus")
+                activated_editor.click()
                 sleep(0.3)
-                editor.clear()
-                editor.send_keys(description)
-                self.logger.info(f"Entered description for step {step_index}")
+                
+                # Send keys to activated editor
+                self.logger.info(f"Sending keys to step {step_index} description: {description[:30]}...")
+                activated_editor.send_keys(description)
+                sleep(0.3)  # Give time for keys to register
+                
+                self.logger.info(f"Successfully entered description for step {step_index}")
                 return True
+                
             except Exception as e:
-                if "stale element" in str(e).lower() and attempt < retries - 1:
-                    self.logger.warning(f"Stale element, retrying... (attempt {attempt + 1}/{retries})")
-                    sleep(0.5)
+                self.logger.error(f"Error on attempt {attempt + 1}: {str(e)}")
+                if attempt < retries - 1:
+                    self.logger.warning(f"Retrying in 1 second...")
+                    sleep(1)
                     continue
                 else:
-                    self.logger.error(f"Failed to enter step description: {e}")
-                    if attempt == retries - 1:
-                        return False
+                    self.logger.error(f"Failed to enter step description after {retries} attempts")
+                    return False
+        
         return False
     
     def enter_step_test_data(self, step_index: int, test_data: str, retries: int = 3) -> bool:
@@ -351,29 +420,66 @@ class TestCaseDetailPage(BasePage):
         """
         for attempt in range(retries):
             try:
-                # Refind element each time to avoid stale reference
-                editor = self.get_step_test_data_editor(step_index)
-                if not editor:
+                self.logger.info(f"Attempt {attempt + 1}/{retries} to enter test data for step {step_index}")
+                
+                # Get and click placeholder to activate the editor
+                placeholder = self.get_step_test_data_editor(step_index)
+                if not placeholder:
                     if attempt < retries - 1:
-                        sleep(0.5)
+                        self.logger.warning(f"Placeholder not found, retrying...")
+                        sleep(1)
                         continue
+                    self.logger.error(f"Could not find placeholder editor for step {step_index}")
                     return False
                 
-                editor.click()
+                self.logger.info(f"Clicking placeholder for step {step_index}")
+                placeholder.click()
+                sleep(0.7)  # Wait for Angular/Froala to activate
+                
+                # Find the activated Froala editor - try multiple selectors
+                selectors = [
+                    f"rich-text[name='stepTestData-{step_index}'] .fr-wrapper .fr-element.fr-view[contenteditable='true']",
+                    f"rich-text[name='stepTestData-{step_index}'] .fr-element.fr-view[contenteditable='true']",
+                    f"rich-text[name='stepTestData-{step_index}'] div[contenteditable='true'].fr-element"
+                ]
+                
+                activated_editor = None
+                for selector in selectors:
+                    try:
+                        activated_locator = Locator(By.CSS_SELECTOR, selector)
+                        activated_editor = self.find_element(activated_locator, timeout=2)
+                        if activated_editor:
+                            self.logger.info(f"Found activated editor with selector: {selector}")
+                            break
+                    except Exception:
+                        continue
+                
+                if not activated_editor:
+                    raise Exception("Could not find activated editor with any selector")
+                
+                # Click on the activated editor to ensure it has focus
+                self.logger.info(f"Clicking activated editor to ensure focus")
+                activated_editor.click()
                 sleep(0.3)
-                editor.clear()
-                editor.send_keys(test_data)
-                self.logger.info(f"Entered test data for step {step_index}")
+                
+                # Send keys to activated editor
+                self.logger.info(f"Sending keys to step {step_index} test data: {test_data[:30]}...")
+                activated_editor.send_keys(test_data)
+                sleep(0.3)  # Give time for keys to register
+                
+                self.logger.info(f"Successfully entered test data for step {step_index}")
                 return True
+                
             except Exception as e:
-                if "stale element" in str(e).lower() and attempt < retries - 1:
-                    self.logger.warning(f"Stale element, retrying... (attempt {attempt + 1}/{retries})")
-                    sleep(0.5)
+                self.logger.error(f"Error on attempt {attempt + 1}: {str(e)}")
+                if attempt < retries - 1:
+                    self.logger.warning(f"Retrying in 1 second...")
+                    sleep(1)
                     continue
                 else:
-                    self.logger.error(f"Failed to enter test data: {e}")
-                    if attempt == retries - 1:
-                        return False
+                    self.logger.error(f"Failed to enter test data after {retries} attempts")
+                    return False
+        
         return False
     
     def enter_step_expected_result(self, step_index: int, expected_result: str, 
@@ -392,36 +498,73 @@ class TestCaseDetailPage(BasePage):
         """
         for attempt in range(retries):
             try:
-                # Refind element each time to avoid stale reference
-                editor = self.get_step_expected_result_editor(step_index)
-                if not editor:
+                self.logger.info(f"Attempt {attempt + 1}/{retries} to enter expected result for step {step_index}")
+                
+                # Get and click placeholder to activate the editor
+                placeholder = self.get_step_expected_result_editor(step_index)
+                if not placeholder:
                     if attempt < retries - 1:
-                        sleep(0.5)
+                        self.logger.warning(f"Placeholder not found, retrying...")
+                        sleep(1)
                         continue
+                    self.logger.error(f"Could not find placeholder editor for step {step_index}")
                     return False
                 
-                editor.click()
+                self.logger.info(f"Clicking placeholder for step {step_index}")
+                placeholder.click()
+                sleep(0.7)  # Wait for Angular/Froala to activate
+                
+                # Find the activated Froala editor - try multiple selectors
+                selectors = [
+                    f"rich-text[name='stepExpectedResult-{step_index}'] .fr-wrapper .fr-element.fr-view[contenteditable='true']",
+                    f"rich-text[name='stepExpectedResult-{step_index}'] .fr-element.fr-view[contenteditable='true']",
+                    f"rich-text[name='stepExpectedResult-{step_index}'] div[contenteditable='true'].fr-element"
+                ]
+                
+                activated_editor = None
+                for selector in selectors:
+                    try:
+                        activated_locator = Locator(By.CSS_SELECTOR, selector)
+                        activated_editor = self.find_element(activated_locator, timeout=2)
+                        if activated_editor:
+                            self.logger.info(f"Found activated editor with selector: {selector}")
+                            break
+                    except Exception:
+                        continue
+                
+                if not activated_editor:
+                    raise Exception("Could not find activated editor with any selector")
+                
+                # Click on the activated editor to ensure it has focus
+                self.logger.info(f"Clicking activated editor to ensure focus")
+                activated_editor.click()
                 sleep(0.3)
-                editor.clear()
-                editor.send_keys(expected_result)
+                
+                # Send keys to activated editor
+                self.logger.info(f"Sending keys to step {step_index} expected result: {expected_result[:30]}...")
+                activated_editor.send_keys(expected_result)
+                sleep(0.3)  # Give time for keys to register
                 
                 if press_tab:
-                    editor.send_keys(Keys.TAB)
-                    sleep(1)  # Wait for new step to generate
-                    self.logger.info(f"Entered expected result for step {step_index} and pressed TAB")
+                    self.logger.info(f"Pressing TAB to create next step")
+                    activated_editor.send_keys(Keys.TAB)
+                    sleep(1.5)  # Wait longer for new step to generate
+                    self.logger.info(f"Successfully entered expected result for step {step_index} and pressed TAB")
                 else:
-                    self.logger.info(f"Entered expected result for step {step_index}")
+                    self.logger.info(f"Successfully entered expected result for step {step_index}")
                 
                 return True
+                
             except Exception as e:
-                if "stale element" in str(e).lower() and attempt < retries - 1:
-                    self.logger.warning(f"Stale element, retrying... (attempt {attempt + 1}/{retries})")
-                    sleep(0.5)
+                self.logger.error(f"Error on attempt {attempt + 1}: {str(e)}")
+                if attempt < retries - 1:
+                    self.logger.warning(f"Retrying in 1 second...")
+                    sleep(1)
                     continue
                 else:
-                    self.logger.error(f"Failed to enter expected result: {e}")
-                    if attempt == retries - 1:
-                        return False
+                    self.logger.error(f"Failed to enter expected result after {retries} attempts")
+                    return False
+        
         return False
     
     def add_test_step(self, description: str, test_data: str, expected_result: str,
@@ -439,15 +582,17 @@ class TestCaseDetailPage(BasePage):
             bool: True if successful
         """
         current_count = self.get_steps_count()
-        step_index = current_count if current_count > 0 else 1
         
-        # If no steps exist, click initial add button
+        # If no steps exist, click initial add button to create first step
         if current_count == 0:
             if not self.click_add_step_initial():
                 self.logger.error("Failed to initialize first step")
                 return False
             sleep(1)
             step_index = 1
+        else:
+            # Fill the last (newest) step - when TAB creates a new step, it becomes the last one
+            step_index = current_count
         
         # Enter step data
         success = (
@@ -476,6 +621,33 @@ class TestCaseDetailPage(BasePage):
         
         for i, step_data in enumerate(steps):
             is_last_step = (i == len(steps) - 1)
+            
+            # For steps after the first, wait for the new step to be created by the previous TAB press
+            if i > 0:
+                expected_count = i + 1  # After filling step i, we expect i+1 steps to exist
+                if not self.wait_for_step_count(expected_count, timeout=3):
+                    self.logger.error(f"Step {expected_count} was not created after TAB")
+                    return False
+                sleep(0.5)  # Additional stabilization time
+                
+                # Fix: After TAB creates a new row, the description field is auto-focused.
+                # Click on the expected_result field (without entering data) to deactivate 
+                # the description field, allowing the code to work properly.
+                current_count = self.get_steps_count()
+                self.logger.info(f"Deactivating auto-focused description field by clicking expected result")
+                try:
+                    expected_result_placeholder = self.get_step_expected_result_editor(current_count)
+                    if expected_result_placeholder:
+                        expected_result_placeholder.click()
+                        sleep(0.3)  # Brief pause to let the focus change
+                        self.logger.info(f"Successfully deactivated description field for step {current_count}")
+                except Exception as e:
+                    self.logger.warning(f"Could not click expected result to deactivate description: {e}")
+            
+            # Get current count to determine which step index to fill
+            current_count = self.get_steps_count()
+            self.logger.info(f"Processing step {i+1}/{len(steps)}, current step count: {current_count}")
+            
             success = self.add_test_step(
                 description=step_data.get('description', ''),
                 test_data=step_data.get('test_data', ''),
@@ -486,8 +658,6 @@ class TestCaseDetailPage(BasePage):
             if not success:
                 self.logger.error(f"Failed to add step {i + 1}")
                 return False
-            
-            sleep(0.5)  # Small delay between steps
         
         self.logger.info(f"Successfully added {len(steps)} steps")
         return True

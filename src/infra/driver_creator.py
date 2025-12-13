@@ -18,16 +18,20 @@ class DriverCreator:
     def create_chrome_driver(options: ChromeOptions, connection: dict) -> webdriver.Chrome:
         try:
             binary_path = connection.get('binary_path', '')
-            if not binary_path:
-                logger.error("Chrome binary path is missing")
-                raise BrowserInitializationError("chrome", "Chrome binary path is missing")
-            if not os.path.exists(binary_path):
+            if binary_path and not os.path.exists(binary_path):
                 logger.warning(f"ChromeDriver binary not found at {binary_path}")
                 raise DriverNotFoundError("ChromeDriver", f"Binary not found at {binary_path}")
-            driver = webdriver.Chrome(
-                service=ChromeService(executable_path=binary_path),
-                options=options
-            )
+            
+            # Use Selenium Manager if no binary_path provided or use specified path
+            if binary_path:
+                driver = webdriver.Chrome(
+                    service=ChromeService(executable_path=binary_path),
+                    options=options
+                )
+            else:
+                # Let Selenium Manager handle driver management
+                driver = webdriver.Chrome(options=options)
+            
             logger.info("Chrome driver created")
             return driver
         except SessionNotCreatedException as e:

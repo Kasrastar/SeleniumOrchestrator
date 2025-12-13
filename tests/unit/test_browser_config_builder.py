@@ -126,3 +126,142 @@ class TestBrowserConfigBuilder:
         options = builder.build()
         
         assert isinstance(options, expected_type)
+
+
+class TestBrowserConfigBuilderNewMethods:
+    """Test suite for new anti-detection methods in BrowserConfigBuilder."""
+    
+    def test_disable_blink_features_chrome(self):
+        """Test disabling Blink features in Chrome."""
+        builder = BrowserConfigBuilder('chrome')
+        options = builder.disable_blink_features('AutomationControlled').build()
+        
+        assert '--disable-blink-features=AutomationControlled' in options.arguments
+    
+    def test_disable_blink_features_custom_feature(self):
+        """Test disabling custom Blink feature."""
+        builder = BrowserConfigBuilder('chrome')
+        options = builder.disable_blink_features('CustomFeature').build()
+        
+        assert '--disable-blink-features=CustomFeature' in options.arguments
+    
+    def test_disable_blink_features_firefox_no_op(self):
+        """Test that disable_blink_features is no-op for Firefox."""
+        builder = BrowserConfigBuilder('firefox')
+        options = builder.disable_blink_features('AutomationControlled').build()
+        
+        # Firefox doesn't have this argument, should not raise error
+        assert isinstance(options, FirefoxOptions)
+    
+    def test_add_experimental_option_chrome(self):
+        """Test adding experimental option in Chrome."""
+        builder = BrowserConfigBuilder('chrome')
+        options = builder.add_experimental_option('prefs', {'key': 'value'}).build()
+        
+        assert isinstance(options, ChromeOptions)
+        # Experimental options are stored in options.experimental_options
+        assert 'prefs' in options.experimental_options
+    
+    def test_exclude_switches_chrome(self):
+        """Test excluding switches in Chrome."""
+        builder = BrowserConfigBuilder('chrome')
+        options = builder.exclude_switches(['enable-logging']).build()
+        
+        assert isinstance(options, ChromeOptions)
+        assert 'excludeSwitches' in options.experimental_options
+        assert 'enable-logging' in options.experimental_options['excludeSwitches']
+    
+    def test_exclude_switches_multiple(self):
+        """Test excluding multiple switches."""
+        builder = BrowserConfigBuilder('chrome')
+        options = builder.exclude_switches(['enable-logging', 'enable-automation']).build()
+        
+        assert 'excludeSwitches' in options.experimental_options
+        assert 'enable-logging' in options.experimental_options['excludeSwitches']
+        assert 'enable-automation' in options.experimental_options['excludeSwitches']
+    
+    def test_disable_automation_extension_chrome(self):
+        """Test disabling automation extension in Chrome."""
+        builder = BrowserConfigBuilder('chrome')
+        options = builder.disable_automation_extension().build()
+        
+        assert isinstance(options, ChromeOptions)
+        assert 'useAutomationExtension' in options.experimental_options
+        assert options.experimental_options['useAutomationExtension'] is False
+    
+    def test_disable_automation_extension_firefox_no_op(self):
+        """Test that disable_automation_extension is no-op for Firefox."""
+        builder = BrowserConfigBuilder('firefox')
+        options = builder.disable_automation_extension().build()
+        
+        # Firefox doesn't support this, should not raise error
+        assert isinstance(options, FirefoxOptions)
+    
+    def test_method_chaining_with_new_methods(self):
+        """Test that new methods support chaining."""
+        builder = BrowserConfigBuilder('chrome')
+        
+        result = (builder
+                  .set_no_sandbox()
+                  .disable_blink_features()
+                  .exclude_switches(['enable-logging'])
+                  .disable_automation_extension())
+        
+        assert isinstance(result, BrowserConfigBuilder)
+    
+    def test_complete_anti_detection_setup_chrome(self):
+        """Test complete anti-detection setup for Chrome."""
+        builder = BrowserConfigBuilder('chrome')
+        options = (builder
+                   .set_no_sandbox()
+                   .disable_dev_shm_usage()
+                   .disable_blink_features('AutomationControlled')
+                   .exclude_switches(['enable-logging'])
+                   .disable_automation_extension()
+                   .build())
+        
+        assert '--no-sandbox' in options.arguments
+        assert '--disable-dev-shm-usage' in options.arguments
+        assert '--disable-blink-features=AutomationControlled' in options.arguments
+        assert 'excludeSwitches' in options.experimental_options
+        assert options.experimental_options['useAutomationExtension'] is False
+    
+    def test_complete_anti_detection_setup_firefox(self):
+        """Test that anti-detection setup doesn't break Firefox."""
+        builder = BrowserConfigBuilder('firefox')
+        options = (builder
+                   .set_no_sandbox()
+                   .disable_dev_shm_usage()
+                   .disable_blink_features('AutomationControlled')
+                   .exclude_switches(['enable-logging'])
+                   .disable_automation_extension()
+                   .build())
+        
+        # Firefox should still work with Chrome-specific methods (no-op)
+        assert isinstance(options, FirefoxOptions)
+        assert '--no-sandbox' in options.arguments
+        assert '--disable-dev-shm-usage' in options.arguments
+    
+    @pytest.mark.parametrize("browser_name", ['chrome', 'firefox', 'edge'])
+    def test_cross_browser_compatibility(self, browser_name):
+        """Test that new methods work across all browsers without errors."""
+        builder = BrowserConfigBuilder(browser_name)
+        
+        # This should not raise any errors for any browser
+        options = (builder
+                   .disable_blink_features()
+                   .exclude_switches(['enable-logging'])
+                   .disable_automation_extension()
+                   .build())
+        
+        assert options is not None
+    
+    def test_backward_compatibility_existing_code(self):
+        """Test that existing code patterns still work."""
+        # Old pattern should still work
+        builder = BrowserConfigBuilder('chrome')
+        options = builder.set_no_sandbox().disable_dev_shm_usage().build()
+        
+        assert '--no-sandbox' in options.arguments
+        assert '--disable-dev-shm-usage' in options.arguments
+
