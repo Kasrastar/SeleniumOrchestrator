@@ -34,7 +34,16 @@ class MaskingFilter(logging.Filter):
         return True
 
 def setup_logger(name: str, log_file: str = "selenium_orchestrator.log", level=logging.INFO):
-    logger = logging.getLogger(name)
+    """
+    Setup logger with file and console handlers.
+    Configures the root logger if name is None, otherwise configures a named logger.
+    """
+    # Get the logger (use root logger for base configuration)
+    if name:
+        logger = logging.getLogger(name)
+    else:
+        logger = logging.getLogger()
+    
     logger.setLevel(level)
 
     try:
@@ -46,9 +55,9 @@ def setup_logger(name: str, log_file: str = "selenium_orchestrator.log", level=l
         console_handler = logging.StreamHandler()
         console_handler.setLevel(level)
 
-        # Set formatter
+        # Set formatter with more details for debugging
         formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(message)s'
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
@@ -72,8 +81,43 @@ def setup_logger(name: str, log_file: str = "selenium_orchestrator.log", level=l
 
     return logger
 
-# Initialize the logger
-logger = setup_logger("SeleniumOrchestrator")
+# Initialize the root logger so all child loggers inherit the configuration
+# This ensures that self.logger in other modules will work properly
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+
+# Clear any existing handlers to avoid duplicates
+if root_logger.hasHandlers():
+    root_logger.handlers.clear()
+
+# Create file handler for root logger
+file_handler = logging.FileHandler("selenium_orchestrator.log")
+file_handler.setLevel(logging.INFO)
+
+# Create console handler for root logger
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+# Set formatter with logger name for debugging
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+# Add filters
+sensitive_filter = SensitiveDataFilter(keywords=["password", "token", "credentials"])
+masking_filter = MaskingFilter(patterns=[
+    (r"(password=)(\w+)", r"\1***"),  # Mask passwords
+    (r"(token=)(\w+)", r"\1***"),  # Mask tokens
+])
+file_handler.addFilter(sensitive_filter)
+console_handler.addFilter(masking_filter)
+
+# Add handlers to root logger
+root_logger.addHandler(file_handler)
+root_logger.addHandler(console_handler)
+
+# Also create a named logger for backward compatibility in main.py
+logger = logging.getLogger("SeleniumOrchestrator")
 
 # Example log messages
 # logger.info("This is a safe message.")
